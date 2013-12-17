@@ -3,7 +3,7 @@
  *
  *   Code for doing interesting things on Arduino.
  *
- *   libferris is free software: you can redistribute it and/or modify
+ *   This arduino code is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
  *   the Free Software Foundation, either version 3 of the License, or
  *   (at your option) any later version.
@@ -18,8 +18,6 @@
  *
  *   For more details see the COPYING file in the root directory of this
  *   distribution.
- *
- *   $Id: Ferris.hh,v 1.70 2011/07/31 21:30:49 ben Exp $
  *
  ********************************************************************
  *   
@@ -51,6 +49,7 @@
 
 #include "attiny_oled_server_spi_privdetails.h"
 
+int displayAsleep = 0;
 
 int chipSelect = 7; // physical pin6
 SimpleMessagePassing5 smp( chipSelect );
@@ -64,7 +63,6 @@ Adafruit_CharacterOLED oled( 0, 1, 2, 3, 8, 9, 10 );
 
 void setup()
 {
-    delay(2000);
     smp.init();
 }
 
@@ -133,11 +131,33 @@ void loop()
     {
         // been a while since we got any new messages
         // so lets turn off the screen before we go back to sleep
+        noInterrupts();
+        displayAsleep = 1;
+        interrupts();
         oled.noDisplay();
+//        oled.command( (1<<4) | (1<<1) | 1 );
     }
     
     if( smp.shouldSleep() )
         snooze();
+
+    
+#if 0
+    // This is an attempt to turn off the internal power on the OLED screen
+    // BUT:
+    //    having trouble bringing it back again        
+    noInterrupts();
+    if( displayAsleep )
+    {
+        interrupts();
+        oled.command( (1<<4) | (1<<2) | (1<<1) | 1 );
+        delay(1000);
+        oled.command(0x0C);
+//        oled.begin( 16, 2 );
+    }
+    interrupts();
+#endif
+
 }
 
 
